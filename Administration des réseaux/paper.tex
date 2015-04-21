@@ -724,7 +724,91 @@ Autoriser tous les paquets émis par le routeur concernant des connexions déjà
 Autoriser le routeur à relayer tous les paquets reçus concernant de nouvelles connexions sur le port 22 :\\
 \textit{iptables -A FORWARD -p tcp -i eth0 −−dport 22 −−sport 1024:65535 -m state −−state NEW -j ACCEPT}\\
 
-
+\newpage
+\section{Révision annales}
+~\\
+\textbf{Rôle du daemon portmap} :\\
+Conversion des numéros de programme RPC (Remote Procedure Call) en numéro de port.
+~\\
+~\\
+\textbf{Quelle est la différence entre une résolution itérative et une résolution récursive en DNS ?}\\
+\begin{itemize}
+	\item \textit{Itérative} : la machine qui demande la résolution de nom contacte un serveur DNS et attend que ce dernier lui retourne la réponse désirée.
+	\item \textit{Récursive} : le serveur de noms contacté fournit en réponse le nom d’un autre serveur DNS à contacter pour avancer dans la résolution.
+\end{itemize}
+~\\
+\textbf{A quoi sert le champ MX dans les zones DNS, donnez un exemple d'utilisation de ce dernier}\\
+Les enregistrements Mail Exchange (MX) dirigent les e-mails d'un domaine vers les serveurs hébergeant les comptes utilisateur du domaine. Plusieurs enregistrements MX peuvent être définis pour un même domaine, chacun avec une priorité différente. Si un e-mail ne peut être distribué à l'aide de l'enregistrement associé à la priorité la plus élevée, l'enregistrement de priorité 2 est utilisé, etc.
+~\\
+~\\
+Exemple : \textit{dig labri.fr. MX}
+~\\
+~\\
+\textbf{Expliquez le fonctionnement du protocole DHCP, pourquoi ce mécanisme est-il basé sur un mécanisme de \textit{broadcast} ?}\\
+\begin{figure}[!hbt]
+	\begin{center}
+	\includegraphics[width=\columnwidth]{dhcp.png}
+	\label{fig:dhcp}
+	\end{center}
+\end{figure}
+\begin{itemize}
+	\item Discover : le client diffuse un broadcast avec son @MAC, à la recherche du serveur, sur les ports 68/UDP (client) et 67/UDP (serveur)
+	\item Offer : le serveur choisit une configuration pour le client (pouvant se baser sur l'@MAC du client
+	\item Request : le client choisi une config et la précise dans son message
+	\item Acknowledge : Confirmation du serveur + éventuellement bail
+\end{itemize}
+\newpage
+\textbf{Différence LDAP et NIS ?}\\
+~\\
+\begin{tabular}{|p{2cm}|p{2cm}|p{2cm}|}
+\hline
+~ 				& \textbf{LDAP} 				& \textbf{NIS}\\
+\hline
+\hline
+Mot de passe	& Crypté 						& Non-crypté\\
+\hline
+Redondance		& Uniquement dans le serveur	& Distribué à chaque client/serveur esclave\\
+\hline
+Fonction		& Beaucoup d'infos (UID, adresse, ...) & Seulement l'identifiant et le mot de passe\\
+\hline
+\end{tabular}
+~\\
+~\\
+\textbf{Dans LDAP, donner deux points illustrant l'intérêt d'utiliser le mécanisme de réplication}\\
+~\\
+\begin{itemize}
+	\item Tolérance aux pannes (en cas de crash d'un serveur)
+	\item En cas de saturation d'un serveur
+\end{itemize}
+~\\
+~\\
+\textbf{Quelles sont les propriétés d'une DMZ ?}\\
+Une zone démilitarisée (DMZ) est un sous-réseau se trouvant entre le réseau local et le réseau extérieur.
+~\\
+\textit{Propriétés :}
+\begin{itemize}
+	\item Les connexions à la DMZ sont autorisées de n’importe où
+	\item Les connexions à partir de la DMZ ne sont autorisées que vers l’extérieur
+\end{itemize}
+~\\
+\textit{Intérêt :}
+\begin{itemize}
+	\item Rendre des machines accessible à partir de l’extérieur (possibilité de mettre en place des serveurs (DNS, SMTP, ...)
+\end{itemize}
+~\\
+~\\
+\textbf{Expliquer le principe de la résolution DNS. Il est demandé de considérer les deux cas suivants : le serveur de nom local connaît la réponse, le serveur de nom local ne connaît pas la réponse.}\\
+\begin{itemize}
+	\item \textit{Le serveur local connaît la réponse :} il retourne la réponse au client.
+	\item \textit{Le serveur local ne connaît pas la réponse :} selon la configuration :
+	\begin{itemize}
+		\item Récursif : le serveur va demander à un autre serveur la réponse
+		\item Itératif : le serveur renvoie au client l'adresse d'un autre serveur à qui demander
+	\end{itemize}
+\end{itemize}
+~\\
+~\\
+\textbf{Quel est le point commun entre NIS et NFS ? Qu'implique l'utilisation de ce mécanisme ?}\\
 
 % Your document ends here!
 \end{document}
