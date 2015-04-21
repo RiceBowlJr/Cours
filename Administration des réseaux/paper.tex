@@ -3,6 +3,8 @@
 \usepackage[utf8x]{inputenc}
 \usepackage[francais]{babel}
 
+\usepackage{listings}
+
 % some very useful LaTeX packages include:
 
 %\usepackage{cite}      % Written by Donald Arseneau
@@ -268,7 +270,6 @@ intermédiaire)
 	\end{figure}
 	
 	\subsection{Identification des protocoles}
-	
 	\begin{itemize}
 		\item Une adresse de transport = une adresse IP + un numéro de
 port (16 bits) → adresse de socket
@@ -374,33 +375,253 @@ symbolique et une adresse Internet (adresse IP)
 	
 	\newpage
 
+\section{Routage dans TCP/IP}
 
+\subsection{Routage dans IP}
 
-% Now we need a bibliography:
-\begin{thebibliography}{5}
+\subsubsection{Sous-réseaux}
+~\\
+Un sous-réseau est un sous-ensemble d'un réseau de classe.
+Les intérêts d'un sous-réseau sont :
+\begin{itemize}
+	\item diviser un réseau de grande taille en plusieurs réseaux physiques connectés par des routeurs (locaux ou distants)
+	\item possibilité de faire coexister des technologies de réseaux différents
+	\item diminution de la congestion du réseau par redirection du traffic et réduction des diffusions
+\end{itemize}
+Pour créer ce sous-réseau, il faut un ID de sous-réseau en séparant les bits d'ID d'hôtes en plusieurs sections.
+~\\
+\subsubsection{Linux : Positionner/Modifier une adresse IP}
+~\\
+La manipulation des adresses IP se fait à l'aide de l'utilitaire \textit{ifconfig}.
 
-	%Each item starts with a \bibitem{reference} command and the details thereafter.
-	\bibitem{HOP96} % Transaction paper
-	J.~Hagenauer, E.~Offer, and L.~Papke. Iterative decoding of binary block
-	and convolutional codes. {\em IEEE Trans. Inform. Theory},
-	vol.~42, no.~2, pp.~429–-445, Mar. 1996.
+Syntaxe :
+\lstset{language=sh}
+\begin{lstlisting}
+ifconfig interface @IP netmask masque ...
+\end{lstlisting}
 
-	\bibitem{MJH06} % Conference paper
-	T.~Mayer, H.~Jenkac, and J.~Hagenauer. Turbo base-station cooperation for intercell interference cancellation. {\em IEEE Int. Conf. Commun. (ICC)}, Istanbul, Turkey, pp.~356--361, June 2006.
+Exemple (configuration de l'interface eth0) :
+\begin{lstlisting}
+ifconfig eth0 192.168.0.1 netmask 255.255.255.0
+\end{lstlisting}
+\subsubsection{Problématique du routage}
+~\\
+\textbf{Objectif} : Acheminer des datagrammes IP d’une machine source A vers une machine destination B.
 
-	\bibitem{Proakis} % Book
-	J.~G.~Proakis. {\em Digital Communications}. McGraw-Hill Book Co.,
-	New York, USA, 3rd edition, 1995.
+\textbf{Problématique} : Commet atteindre la machine B en connaissant son adresse IP ?
 
-	\bibitem{talk} % Web document
-	F.~R.~Kschischang. Giving a talk: Guidelines for the Preparation and Presentation of Technical Seminars.
-	\url{http://www.comm.toronto.edu/frank/guide/guide.pdf}.
+\begin{figure}[!hbt]
+	\begin{center}
+	\includegraphics[width=\columnwidth]{routage.png}
+	\label{fig:routage}
+	\end{center}
+\end{figure}
 
-	\bibitem{5}
-	IEEE Transactions \LaTeX and Microsoft Word Style Files.
-	\url{http://www.ieee.org/web/publications/authors/transjnl/index.html}
+→ Nécessité d’identifier toutes les machines intermédiaires.
+~\\
+\subsubsection{Routage IP : principe de base}
+~\\
+Définition :
+\begin{itemize}
+	\item Processus de choix des chemins par lesquels les paquets sont transmis à la machine destinataire
+	\item Processus basé sur une table de routage IP \textit{IP routing table} contenant les informations relatives aux différentes destinations possibles et à la façon de les atteindre
+\end{itemize}
 
-\end{thebibliography}
+Principe de base :
+\begin{itemize}
+	\item L'émetteur ne connapit pas la route complète mais l'adresse du prochain site IP qui le rapprochera de la destination (prochain saut)
+	\item Changements dynamiques possibles (en cas de panne)
+	\item Extraire du datagramme l'adresse IP de destination (\textit{IPDest})
+	\item Calculer l'adresse du réseau de destination (\textit{IPRes})
+	\item Si \textit{IPRes} = \textit{IPLocal} alors
+	\begin{itemize}
+		\item \textit{IPDest} est directement accessible sur le réseau élémentaire commun
+		\item La couche IP locale tente la translation d'adresse logique \textit{IPDest} en adresse physique à travers la table maintenue en cache
+		\item Si le réseau est de type Ethernet, le protocole utilisé est ARP
+		\item Sinon les adresses physiques destinataires X21 auront dû être configurées à la main au préalable
+	\end{itemize}
+	\item Sinon (ce n’est pas une adresse accessible, il faut alors consulter la table de routage IP locale) :
+	\begin{itemize}
+		\item Si \textit{IPRes} est dans la table alors :
+		\begin{itemize}
+			\item Router le datagramme selon les indications de la table (vers un autre nœud du réseau local, avec résolution adresse IP → adresse physique, ou vers un autre coupleur connecté à un réseau externe)
+		\end{itemize}
+		\item SInon \textit{IPRes} n'est pas dans la table alors :
+		\begin{itemize}
+			\item Prendre la route par défaut indiquée dans la table
+			\item Router le datagramme selon les indications de l'entrée par défaut de la table (vers un autre nœud du réseau local, avec résolution d'adresse IP → adresse physique, ou vers un autre coupleur connecté à un réseau externe)
+		\end{itemize}
+	\end{itemize}
+\end{itemize}
+~\\
+\subsubsection{Tables de routage IP dans Linux}
+~\\
+Afficher les routes :\\
+\lstinline$~/# route$ ~\\
+\lstinline$Destination     Gateway         Genmask     Iface$
+\lstinline$default         10.3.255.254    0.0.0.0     wlan2$
+\lstinline$10.3.0.0        *               255.255.0.0 wlan2$
+~\\
+~\\
+Ajouter une route par défaut :\\
+\lstinline$~/# route add defaut gw @passerelle$ 
+~\\
+~\\
+Ajouter une route utilisatn l'interface réseau \textit{iface} vers un hôte particulier) :\\
+\lstinline$~/# route add -host @host gw @passerelle dev iface$
+~\\
+~\\
+Ajouter une route utilisant l'interface \textit{iface} vers un réseau particulier :\\
+\lstinline$~/# route add -net @reseau netmask mask dev iface gw @gw$
+~\\
+~\\
+Pour les suppression de route, il suffit de remplacer \lstinline$add$ par \lstinline$del$.
+
+\subsubsection{Mise en place d'un réseau}
+~\\
+\textbf{Concentrateur (hub)} : partage de bande passante entre les hôtes raccordés.
+\textbf{Commutateur (switch)} : pas d'interférences entre les connexions simultanées.
+\textbf{Routeur} : Pas d'interférences entre des connexions simultanées, possibilité de communication entre 2 réseaux logiques différents.
+
+\newpage
+\section{Réseaux privés}
+
+\subsection{Introduction}
+
+Les adresse privées ont été crées pour :
+\begin{itemize}
+	\item gérer la pénurie d'adresses au sein d'un réseau
+	\item masquer l'intérieur d'un réseau par rapport à l'extérieur
+	\item améliorer la sécurité pour le réseau interne
+\end{itemize}
+
+Il existe 2 mécanismes de translation d'adresses (NAT - Network Address Translation) :
+\begin{itemize}
+	\item \textbf{statique} : association entre \textit{n} adresses publiques et \textit{n} adresses privées
+	\item \textbf{dynamique} : association entre \textit{1} adresse publique et \textit{n} adresses privées
+\end{itemize}
+
+\subsection{NAT statique}
+
+Intérêt :
+\begin{itemize}
+	\item Uniformité de l'adressage dans la partie privée du réseau (modif. de la correspondance @pu/@pri facile)
+	\item Sécurité accrue (tout passe par la passerelle NAT)
+\end{itemize}
+
+L'inconvénient majeur est que la pénurie d'@pu n'est pas résolue.
+	
+\begin{figure}[!hbt]
+	\begin{center}
+	\includegraphics[width=\columnwidth]{nat_stat.png}
+	\caption{NAT statique : principe de fonctionnement}
+	\label{fig:nat_stat}
+	\end{center}
+\end{figure}
+
+\subsection{NAT dynamique : Masquerading}
+
+Intérêt :
+\begin{itemize}
+	\item Plusieurs machines utilisent la même @pu pour sortir du réseau privé
+	\item Sécurité accrue (tout passe par la passerelle NAT)
+\end{itemize}
+
+L'inconvénient majeur est que les machines du réseau interne ne sont pas accessibles de l'extérieur (impossible d'initier une connexion de l'extérieur).
+\newpage
+
+\subsubsection{Fonctionnement}
+~\\
+Comment le routeur fait-il la diférence entre les paquets qui lui sont destinés et les paquet à relayer :
+
+\begin{lstlisting}
+A chaque nouvelle connexion :
+  Modif. @src et port source:
+  (@src_pri,port_src)->(@pu,port_src)
+  Sauvegarder l'asso ds table NAT
+Pour chaque paquet entrant :
+  Chrcher une asso. (@dest., port_dest)
+  Si exist une asso. ds table NAT Alors :
+    Modif. (@dest., port_dest)
+    Relayer le paquet
+  Sinon
+    /*Erreur de routage*/
+  FinSi
+\end{lstlisting}
+
+Le routeur gère toutes les associations, il y a donc unicité de l'association (donc du port source après translation).
+~\\
+\subsubsection{Problèmes liés à NAT dynamique}
+~\\
+\begin{itemize}
+	\item Nécessité d'implémenter une méthode spécifique aux protocoles n'utilisant pas de port
+	\item Protocoles utilisant @IP, nécessité de mettre en place un "\textit{proxy}" (\textsc{FTP} en mode actif par exemple)
+	\item Nécessité de faire de la redirection de port (port mapping/forwarding)
+\end{itemize}
+
+~\\
+\subsubsection{Proxy}
+~\\
+Un proxy est un intermédiaire dans une connexion entre le client et le serveur.\\
+Le client s'adresse toujours au proxy.\\
+Le proxy est spécifique à une application donnée (\textsc{HTTP}, \textsc{FTP}, ...).
+	
+\begin{figure}[!hbt]
+	\begin{center}
+	\includegraphics[width=\columnwidth]{proxy.png}
+	\caption{NAT statique : principe de fonctionnement}
+	\label{fig:proxy}
+	\end{center}
+\end{figure}
+
+\newpage
+\section{Iptables et NAT}
+
+La fonctionnalité de \textit{firewall} est implémentée dans le noyau de Linux. Il y a 3 type de firewall filtrant :
+\begin{itemize}
+	\item \textit{ipfwadm} : jusqu’à la version 2.1.102 du noyau linux
+	\item \textit{ipchains} : entre les versions 2.2.0 et 2.4 du noyau linux
+	\item \textit{iptables} : à  partir des noyaux 2.4
+\end{itemize}
+
+Nous nous intéresserons seulement à \textit{iptables} dans ces notes de cours, car c'est la version que nous avons utilisé en TP. Se référer au cours complet pour avoir des informations sur les autres firewalls.
+
+3 types de règles :
+\begin{itemize}
+	\item \textbf{INPUT} : sont appliquées lors de l’arrivée d’un paquet
+	\item \textbf{FORWARD} : sont appliquées lorsque la destination du paquet n'est pas le routeur
+	\item \textbf{OUTPUT} : sont appliquées dès qu'un paquet doit sortir du routeur
+\end{itemize}
+
+\begin{figure}[!hbt]
+	\begin{center}
+	\includegraphics[width=\columnwidth]{iptables_fonct.png}
+	\caption{\textit{iptables} : principe de fonctionnement}
+	\label{fig:iptables_fonct}
+	\end{center}
+\end{figure}
+
+A chaque table une fonctionnalité :
+\begin{itemize}
+	\item \textit{filter} : filtrage des paquets
+	\item \textit{nat} : NAT
+	\item \textit{mangle} : marquage des paquets
+\end{itemize}
+~\\
+\begin{tabular}{|p{1.7cm}|p{1.9cm}|p{2.5cm}|p{1.9cm}|}
+  \hline
+  \multicolumn{2}{|c|}{\textsc{FILTER}} & \multicolumn{2}{c|}{\textsc{NAT}} \\
+  \hline
+  \textsc{INPUT} & paquet entrant sur le routeur & \textsc{PREROUTING} & NAT de destination \\
+  \hline
+  \textsc{OUTPUT} & paquet émis par le routeur & \textsc{POSTROUTING} & NAT de source \\
+  \hline
+  \textsc{FORWARD} & paquet traversant le routeur & \textsc{OUTPUT} & NAT sur les paquets émis localement \\
+  \hline
+\end{tabular}
+~\\
+~\\
+
 
 % Your document ends here!
 \end{document}
