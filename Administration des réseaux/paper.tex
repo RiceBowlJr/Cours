@@ -619,8 +619,111 @@ A chaque table une fonctionnalité :
   \textsc{FORWARD} & paquet traversant le routeur & \textsc{OUTPUT} & NAT sur les paquets émis localement \\
   \hline
 \end{tabular}
+\newpage
+\subsection{Fonctionnalités NAT}
+
+\begin{figure}[!hbt]
+	\begin{center}
+	\includegraphics[width=\columnwidth]{iptables_nat.png}
+	\caption{\textit{iptables} : NAT statique}
+	\label{fig:iptables_nat}
+	\end{center}
+\end{figure}
+
+Arrivée d'un paquet de l'extérieur :\\
+\textit{iptables -t nat -A PREROUTING -d 140.77.13.2 -i eth1 -j DNAT −−to-destination 192.168.0.2}\\
 ~\\
+Paquet émis depuis le réseau privé :\\
+\textit{iptables -t nat -A POSTROUTING -s 192.168.0.2 -o eth1 -j SNAT −−to-source 140.77.13.2}\\
 ~\\
+2change de paquet entre le routeur et la machine du réseau privé :\\
+\textit{iptables -t nat -A OUTPUT -d 140.77.13.2 -j DNAT −−to-destination 192.168.0.2}
+
+\begin{figure}[!hbt]
+	\begin{center}
+	\includegraphics[width=\columnwidth]{iptables_nat_dy.png}
+	\caption{\textit{iptables} : NAT dynamique}
+	\label{fig:iptables_nat_dy}
+	\end{center}
+\end{figure}
+
+Association entre toutes les adresses privées du sous-réseau 192.168.0.0/24 avec l’interface eth1 :\\
+\textit{iptables -t nat -A POSTROUTING -o eth1 -s 192.168.0.0/24 -j MASQUERADE}\\
+~\\
+Association entre toutes les adresses privées du sous-réseau 192.168.1.0/24 avec l’interface eth2 :\\
+\textit{iptables -t nat -A POSTROUTING -o eth2 -s 192.168.1.0/24 -j MASQUERADE}\\
+~\\
+Transférer les connexions sur le port 80 de l’adresse 140.77.13.2 sur la machine ayant l’adresse privée 192.168.0.200 sur le port 8080 :\\
+\textit{iptables -t nat -A PREROUTING -p tcp -d 140.77.13.2 −−dport 80 −−sport 1024:65535 -j DNAT −−to 192.168.0.200:8080}
+
+
+\newpage
+\section{Firewall}
+
+Pourquoi un firewall ?
+\begin{itemize}
+	\item Contrôle (des connexions sortantes)
+	\item Sécurité (contre les intrusions externes)
+	\item Vigilance (surveiller/tracer le trafic entre le réseau local et internet)
+\end{itemize}
+
+Il y a plusieurs type de firewall :
+\begin{itemize}
+	\item Niveau réseau (iptables, paquet filter, ...)
+	\item Niveau applicatif (inetd, xinetd, ...)
+	\item Niveau des applications (/etc/ftpaccess pour ftp, ...)
+\end{itemize}
+
+\subsection{DMZ}
+
+Une zone démilitarisée (DMZ) est un sous-réseau se trouvant entre le réseau local et le réseau extérieur.
+
+Propriétés :
+\begin{itemize}
+	\item Les connexions à la DMZ sont autorisées de n’importe où
+	\item Les connexions à partir de la DMZ ne sont autorisées que vers l’extérieur
+\end{itemize}
+
+Intérêt :
+\begin{itemize}
+	\item Rendre des machines accessible à partir de l’extérieur (possibilité de mettre en place des serveurs (DNS, SMTP, ...)
+\end{itemize}
+
+\subsection{iptables et filtrage}
+
+Les règles sont traitées de manière séquentielle : le paquet sort dès qu'il rencontre une règle qui peut lui être appliquée.
+
+~\\
+\subsubsection{Exemples d'utilisation}
+~\\
+Accepter tous les paquets en provenance de n’importe où et destinés à l’adresse du routeur 192.168.1.1 :\\
+\textit{iptables -A INPUT -s 0/0 -i eth0 -d 192.168.1.1 -p TCP -j ACCEPT}\\
+~\\
+Accepter de router les paquets entrant sur eth0 tels que (@src : 0/0, @dest : 192.168.1.58, P-source : 1024-65535, P-dest : 80) :\\
+\textit{iptables -A FORWARD -s 0/0 -i eth0 -d 192.168.1.58 -o eth1 -p TCP −−sport 1024:65535 −−dport 80 -j ACCEPT}\\
+~\\
+Accepter un paquet ICMP “echo-request” (ping) par seconde :\\
+\textit{iptables -A INPUT -p icmp −−icmp-type echo-request -m limit −−limit 1/s -i eth0 -j ACCEPT}
+
+\subsection{iptables et suivi des connexions}
+
+Il y a 4 états possibles  pour une connexion :
+\begin{itemize}
+	\item \textbf{NEW} : nouvelle connexion établie
+	\item \textbf{ESTABLISHED} : la connexion analysée est déjà établie
+	\item \textbf{RELATED} : la connexion est en relation avec une connexion  déjà établie (ftp-data par exemple)
+	\item \textbf{INVALID} : le paquet reçu n'appartient à aucune des trois catégories précédentes
+\end{itemize}
+
+~\\
+\subsubsection{Exemples d'utilisation}
+~\\
+Autoriser tous les paquets émis par le routeur concernant des connexions déjà établies :\\
+\textit{iptables -A OUTPUT -o eth0 -m state −−state ESTABLISHED,RELATED -j ACCEPT}\\
+~\\
+Autoriser le routeur à relayer tous les paquets reçus concernant de nouvelles connexions sur le port 22 :\\
+\textit{iptables -A FORWARD -p tcp -i eth0 −−dport 22 −−sport 1024:65535 -m state −−state NEW -j ACCEPT}\\
+
 
 
 % Your document ends here!
