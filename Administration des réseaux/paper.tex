@@ -809,6 +809,23 @@ Une zone démilitarisée (DMZ) est un sous-réseau se trouvant entre le réseau 
 ~\\
 ~\\
 \textbf{Quel est le point commun entre NIS et NFS ? Qu'implique l'utilisation de ce mécanisme ?}\\
+Le point commun est qu'ils utilisent tous les deux portmap, et l'utilisation de ce mécanisme entraîne donc l'utilisation de la correspondance numéro de programme RPC / numéro de port.
+~\\
+~\\
+\textbf{Expliquer rapidement le fonctionnement du protocole ARP.}\\
+\begin{figure}[!hbt]
+	\begin{center}
+	\includegraphics[width=10cm]{arp.png}
+	\label{fig:arp}
+	\end{center}
+\end{figure}
+~\\
+~\\
+\textbf{Qu'apporte l'utilisation de caches dans les protocoles tels qu'ARP ou DNS ? Quels sont les problèmes posés par l'utilisation de tels caches ?}\\
+Elle permet d'éviter une con-gestion (c'est su verlant) du serveur en ayant les réponses dans ce cache et en plus ça permet de gagner du temps à éviter de lancer des requêtes sur des autres serveurs.\\
+Le problème est que ce cache peut-être modifié et donc le serveur fournira des fausses informations.
+~\\
+~\\
 
 % Your document ends here!
 \end{document}
