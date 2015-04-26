@@ -233,7 +233,77 @@ labri.fr. 28800 IN MX 10 iona.labri.fr.
 ...
 		\end{Verbatim}
 		
+	\subsection{Balayage}
+	
+		\subsubsection{Découverte de machines}
+		~\\
+			\textbf{But} : découvrir les machines d'un réseau donné.\\
+			\textbf{Principe} : envoyer un paquet à toutes les adresses et analyser le paquet retour.\\
+			\textbf{Outils} : \verb$nmap$.
+		~\\
+		\subsubsection{Découverte de ports ouverts}
+		~\\
+			\textbf{But} : découvrir les services/ports ouverts sur une machine donnée.\\
+			\textbf{Principe} : envoyer des paquets et analyser les paquet retour (ou leur absence).\\
+			\textbf{Outils} : \verb$nmap$, \verb$telnet$, \verb$netcat$, ...
+		~\\
+		\subsubsection{Techniques de balayage avec nmap}
+		~\\
+			\textit{ping sweep} (balayage avec ping) : \verb$nmap -sP -PI ...$\\
+			\textbf{Principe} : envoyer un paquet \verb$ICMP Echo Request$ et attendre le paquet \verb$ICMP Echo Reply$.\\
+			\textbf{Inconvénient} : méthode très peu discrète.\\
+			~\\
+			\textit{Techniques plus sophistiquées} : nécessite généralement des privilèges administrateur sur la machine source :
+			\begin{itemize}
+				\item \textit{Half Open SYN scan} (un seul paquet SYN)
+				\item \textit{NULL scan} (paquet sans flags) (réponse uniqueent si le port correspondant est fermé)
+				\item \textit{FIN scan} (un seul paquet avec le flag FIN)
+				\item \textit{XMAS scan} (URG + PUSH + FIN)
+				\item ...
+			\end{itemize}
+		~\\
+		\subsubsection{Détection de ports ouverts}
+		~\\
+			\textbf{scan TCP via HTTP \textit{proxy bounce scan}} : utiliser un proxy HTTP comme relai pour faire du scan de ports :
+			\begin{itemize}
+				\item \verb$GET http://ftp.ens-lyon.fr:21 HTTP/1.0$ et attendre la réponse
+			\end{itemize}
+			\textbf{scan TCP via FTP \textit{FTP Bounce attack}} : utiliser un proxy FTP (ayant un disfonctionnement) comme relai pour faire du scan de ports :
+			\begin{itemize}
+				\item \verb$PORT 10,10,0,2,0,25$
+				\item \verb$nmap -b ...$
+			\end{itemize}
+			\textbf{scan UDP} : \verb$nmap -sU ...$\\
+			\textbf{scan RPC} : \verb$nmap -sR ...$
 		
+	\subsection{Détermination du filtrage IP}
+	
+		\textbf{Méthode} :
+		\begin{itemize}
+			\item forger un paquet avec un \textit{ttl} tel que le paquet soit arrêté par un filtre IP.
+			\item Essayer d ecommuniquer avc un hôte situé derrière le firewall.
+			\item Analyser les réponses.
+		\end{itemize}
+		\textbf{Outils} : firewalk, ...\\
+		\textbf{Défense} : Interdir aux réponses ICMP de sortir du réseau protégé, \textbf{etc}.
+	
+	\subsection{Prise de contrôle d'un serveur distant}
+		
+		En plusieurs étapes :
+		\begin{enumerate}
+			\item Recherche de services ouverts (SMTP, FTP, ...)
+			\item Exploitation de vulnérabilités : (CGI, exploit connu, débordement de buffer, injection de code/commande, ...)
+			\item Pose de sniffer
+			\item Pose de backdoor
+		\end{enumerate}
+		~\\
+		Exemples de backdoor :\\
+		\textbf{rwwwshell} : lancer un client HTTP avec un shell associé sur une machine à l'intérieur du réseau et ouvrir une connexion HTTP vers un serveur du pirate.\\
+		\textbf{loki} : installer un serveur particulier sur une machine du réseau interne et communiquer avec lui en utilisant le champ données des paquets ICMP.
+		
+	\subsection{Attaques sur les réseaux locaux}
+		
+	
 		
 
 	
