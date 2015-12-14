@@ -371,9 +371,46 @@ labri.fr. 28800 IN MX 10 iona.labri.fr.
 		
 \section{IPSec}
 
+	Le besoin de sécurité s'est fait ressentir vers 1994\footnote{RFC 1636} avec la recrudescence des attaques de type spoofing.
+	IPSec apporte plusieurs applications :
+	\begin{itemize}
+		\item Sécuriser une connexion de succursale sur internet
+		\item Accès distant sécurisé sur internet
+		\item Authenticité des paquets reçus
+	\end{itemize}
+	De plus, IPSec a les avantages d'être utilisé uniquement sur des communications spécifiques\footnote{sans perturber les autres communications}, d'être au dessous de la couche de transport (TCP, UDP) ce qui lui permet d'être transparent aux applications, ainsi qu'aux utilisateurs\footnote{une fois mis en place}.
+	\begin{figure}[hbt!]
+			\begin{tabular}{c|ccc}
+				~ & AH & ESP (chi) & ESP (chif. + auth.) \\
+				\hline
+				Ctrl d'accès & X & X & X \\
+				Intégr. hors co. & X & & X \\
+				Auth. origine datas & X & & X \\
+				Rejet paquets rejoués & X & X & X \\
+				Confidentialité & & X & X \\
+				Confi. flot trafic & & X & X \\
+			\end{tabular}
+			\caption{Services d'IPSec}
+			\label{fig:ipsec_services}
+	\end{figure}
+		
+	Une association de sécurité\footnote{AS} est une relation en sens unique entre un émetteur et un destinataire qui garantit les services de sécurité pour le trafic généré.\\
+	Des services de sécurité sont alloués à une AS pour utiliser AH ou ESP, mais pas les deux.\\
+	Une AS est définie par 3 paramètres :
+	\begin{itemize}
+		\item Index de paramètre de sécurité (IPS) : une chaîne binare assignée à cette AS et ayant une signification locale
+		\item @IP de destination
+		\item Identification du protocole de sécurité : indique si l'association est AH ou ESP
+	\end{itemize}
 	
-		
-		
+	Plusieurs AS peuvent être combinées.\\
+	Les associations entre AS et type de trafic se font pas le biais d'une base de données de politique de sécurité (SPD\footnote{Security Policy Database}).
+	
+	Il y a deux modes d'utilisation d'IPSec :
+	\begin{itemize}
+		\item Mode transport : sécurité au niveau de la couche transport, ESP chiffre (et optionnellement authentifie) uniquement l'information utile du paquet, AH authentifie l'information utile IP et des parties de l'en-tête
+		\item Mode tunnel : sécurité du paquet tout entier, après l'ajout des champs AH ou ESP, le paquet entier est traité comme l'information utile du paquet IP externe. Au moins une extrémité de l'AS doit être une passerelle de sécurité\footnote{firewall, passerelle inplémentant IPSec, ...}
+	\end{itemize}
 
 	
 % Your document ends here!
