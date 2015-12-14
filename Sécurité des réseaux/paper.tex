@@ -303,7 +303,76 @@ labri.fr. 28800 IN MX 10 iona.labri.fr.
 		
 	\subsection{Attaques sur les réseaux locaux}
 		
+		\textbf{Ecoute du réseau : }capturer le contenu des paquets qui ne nous sont pas destinés :
+		\begin{itemize}
+			\item tcpdump
+			\item sniff
+			\item ...
+		\end{itemize}
+
+		\textbf{Usurpation d'adresses (IP et MAC) : }Forger et envoyer des paquets avec une fausse @IP :
+		\begin{itemize}
+			\item dsniff
+			\item ...
+		\end{itemize}
+
+		\textbf{Vol de session : }Forger des paquets permettant la prise de contrôle d’une connexion déjà établie :
+		\begin{itemize}
+			\item juggernaut
+			\item hunt
+			\item ...
+		\end{itemize}
+
+	\subsection{Usurpation d'adresses (Spoofing)}
+
+		Le principe est de forger et envoyer des paquets IP avec une fausse adresse source. Il est donc impossible de trouver la véritable source.\\
+		C'est une technique souvent utilisée dans le cas d'attaque de type DoS\footnote{Une attaque de type DoS vise l'interruption d'un service en saturant la cible de requêtes}.
+
+	\subsection{Vol de session (Connection Hijacking)}
+
+		L'objectif est de prendre la main sur une connexion déjà établie.\\
+		\textbf{Principe : }
+		\begin{itemize}
+			\item Attendre l'établissement d'une connexion
+			\item Désynchroniser la connexion entre le client et le serveur (en forgeant un paquet avec un numéro de séquence particulier)
+			\item Profiter de la désynchronisation pour faire faire au serveur ce que l'on veut
+		\end{itemize}
+		C'est une attaques très compliquée, voir impossible si l'on a pas la possibilité de voir le trafic entre le client et le serveur.
+
+\section{Quelques cas concrets}
+
+	\subsection{DNS : failles et dangers}
+		
+		\textbf{Présentation de DNS}\\
+		C'est un protocole proposé en 1983, qui n'a pas beaucoup évolué depuis.\\
+		C'est un mécanisme rapide et précis qui réalise la correspondance nom/@IP. DNS peut servir à plus que simplement renvoyer l'@IP d'un nom de domaine.\\
+		DNS est le deuxième plus ancien protocole \textit{incontesté} dans ce qu'il fait\footnote{telnet a évolué vers ssh, FTP a été délaissé pour HTTP, ...}, il ne reste que SMTP qui est dans le même cas. Il est donc universellement utilisé et largement déployé.
+		
+		\textbf{Fonctionnement}\\
+		On distingue deux types de fonctionnement lors d'une requête DNS :
+		\begin{itemize}
+			\item Récursif : si le serveur interrogé ne connaît pas la réponse, il va lui-même lancer une requête vers un autre serveur pour obtenir la réponse, qu'il garde en cache (au maximum 1 semaine en moyenne)
+			\item Itératif : si le serveur interrogé ne connaît pas la réponse, il va simplement indiquer quel serveur interroger au client
+		\end{itemize}
+		
+		La grosse faille des serveurs DNS est le fait qu'ils utilisent majoritairement le même port (53), et qu'il devient donc facile de spammer le cache d'un serveur. Ceci peut par contre avoir des effets collatéraux\footnote{casser la hiérarchie DNS et donc faire tomber internet}.
+		
+		Afin de patcher ce problème, il faudrait améliorer la randomisatin de numéro de requête (pour éviter le spamming), utiliser un port source aléatoire et à plus long terme, utiliser un protocole à signature électronique tel que DNSSec.
+		
+	\subsection{Honeypot}
 	
+		Le \textit{honeypot} est une technique qui laisse volontairement une machine ou plus souvent une partie du réseau (complètement séparé du reste) afin que les attaquants ciblent plus ce dernier. Un honeypot à deux principaux buts :
+		\begin{itemize}
+			\item Augmenter la sécurité du réseau
+			\item Récupérer des informations sur les méthodes des attaquants
+		\end{itemize}
+		
+		Cependant, cette méthode est assez visible car un honeypot laisse une empreinte qui peut être repérée.
+		
+\section{IPSec}
+
+	
+		
 		
 
 	
